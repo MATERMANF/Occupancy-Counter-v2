@@ -33,10 +33,6 @@
 #include "config.h"
 #include "secrets.h"
 
-#ifndef USE_HOME_WIFI
-#include <WiFiEnterprise.h>
-#endif
-
 #include "tracking.h"
 
 // ── hardware objects ────────────────────────────────────────────────────────
@@ -291,21 +287,17 @@ void logToSD() {
 }
 
 // ============================================================================
-// WiFi — home (WPA2-PSK) or eduroam (WPA2-Enterprise)
+// WiFi — (WPA2-PSK)
 // ============================================================================
 bool connectWifi() {
-#ifdef USE_HOME_WIFI
-    Serial.printf("[WIFI] Connecting to %s …\n", HOME_SSID);
+    Serial.printf("[WIFI] Connecting to %s …\n", WIFI_SSID);
     WiFi.mode(WIFI_STA);
-    WiFi.begin(HOME_SSID, HOME_PASSWORD);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     int tries = 40;
     while (WiFi.status() != WL_CONNECTED && tries-- > 0) { delay(500); Serial.print('.'); }
     Serial.println();
     bool ok = (WiFi.status() == WL_CONNECTED);
-#else
-    Serial.printf("[WIFI] Connecting to %s as %s …\n", EDUROAM_SSID, EDUROAM_USERNAME);
-    bool ok = WiFiEnterprise.begin(EDUROAM_SSID, EDUROAM_USERNAME, EDUROAM_PASSWORD, true);
-#endif
+
     if (ok) {
         Serial.printf("[WIFI] Connected — IP %s  RSSI %d dBm\n",
                       WiFi.localIP().toString().c_str(), WiFi.RSSI());
@@ -319,32 +311,25 @@ bool connectWifi() {
 
 void checkWifi() {
     unsigned long now = millis();
-    if (now - lastWifiCheck < WIFI_CHECK_INTERVAL_MS) return;
     lastWifiCheck = now;
 
     bool connected;
-#ifdef USE_HOME_WIFI
-    connected = (WiFi.status() == WL_CONNECTED);
-#else
-    connected = WiFiEnterprise.isConnected();
-#endif
+    connected = WiFi.status();
 
-    if (connected) {
+    if (connected == WL_CONNECTED) {
         if (!wifiWasUp) {
             Serial.printf("[WIFI] Reconnected — IP %s\n",
                           WiFi.localIP().toString().c_str());
             reconnectFails = 0;
         }
         wifiWasUp = true;
-        return;
+    }
+    else{
+        wifiWasUp = false;
+        Serial.printf("[WIFI] Attempted to connect to WiFi - Failed.");
     }
 
-    wifiWasUp = false;
-    if (reconnectFails >= MAX_RECONNECT_ATTEMPTS) return;
-
-    Serial.printf("[WIFI] Reconnect attempt %d/%d …\n",
-                  reconnectFails + 1, MAX_RECONNECT_ATTEMPTS);
-    if (!connectWifi()) reconnectFails++;
+    return;
 }
 
 // ============================================================================

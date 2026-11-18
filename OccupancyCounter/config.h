@@ -24,7 +24,7 @@
 // ============================================================================
 #define SHEETS_UPLOAD_INTERVAL_MS  30000   // append a row every 30 s
 #define SD_LOG_INTERVAL_MS         300000  // SD backup every 5 min
-#define WIFI_CHECK_INTERVAL_MS     5000    // check eduroam link every 5 s
+#define WIFI_CHECK_INTERVAL_MS     5000    // check eduroam link every 5 s  -- DEPRECATED
 #define MAX_RECONNECT_ATTEMPTS     5       // then stop retrying until next reboot
 
 // ============================================================================
